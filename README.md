@@ -1,5 +1,5 @@
-# AddInstancesIndirect<T>
-Test project that uses `RayTracingAccelerationStructure.AddInstancesIndirect<T>` to add many ray tracing instances to an acceleration structure in a single call.
+# `AddInstancesIndirect<T>`
+Test project that uses `RayTracingAccelerationStructure.AddInstancesIndirect<T>` to configure in a single call many ray tracing instances that use different geometries and materials.
 
 Function signatures:
 
