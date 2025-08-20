@@ -1,0 +1,59 @@
+#pragma only_renderers d3d11 ps5 xboxseries
+
+#pragma kernel CSMain
+
+// Can be 16-bit or 32-bit indices.
+ByteAddressBuffer InputIndexBuffer;
+uint InputIndexBufferStride;
+uint InputIndexCount;
+uint BaseVertex;
+
+// Output indices are always 32-bit.
+RWByteAddressBuffer OutputIndexBuffer;
+uint OutputIndexBufferOffset;
+
+[numthreads(64,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Copies 3 indices at a time.
+    // id.x is triangle index.
+
+    uint triangleIndex = id.x;
+
+    if (triangleIndex >= InputIndexCount / 3)
+        return;
+
+    uint3 indices = uint3(0, 0, 0);
+
+    const uint srcOffsetInBytes = (triangleIndex * 3) * InputIndexBufferStride;
+
+    if (InputIndexBufferStride == 2)
+    {
+        // Read 4 indices from an address multiple of 4. Discard one of the indices.
+        const uint dwordAlignedOffset = srcOffsetInBytes & ~3;
+        const uint2 fourIndices = InputIndexBuffer.Load2(dwordAlignedOffset);
+
+        if (dwordAlignedOffset == srcOffsetInBytes)
+        {
+            indices.x = fourIndices.x & 0xffff;
+            indices.y = (fourIndices.x >> 16) & 0xffff;
+            indices.z = fourIndices.y & 0xffff;
+        }
+        else
+        {
+            indices.x = (fourIndices.x >> 16) & 0xffff;
+            indices.y = fourIndices.y & 0xffff;
+            indices.z = (fourIndices.y >> 16) & 0xffff;
+        }
+    }
+    else if (InputIndexBufferStride == 4)
+    {
+        indices = InputIndexBuffer.Load3(srcOffsetInBytes);
+    }
+
+    indices += uint3(BaseVertex, BaseVertex, BaseVertex);
+
+    // Output indices are always 32-bit.
+    const uint outputIndexBufferStride = 4;
+    OutputIndexBuffer.Store3(OutputIndexBufferOffset + ((triangleIndex * 3) * outputIndexBufferStride), indices);
+}

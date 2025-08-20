@@ -1,0 +1,30 @@
+#pragma only_renderers d3d11 ps5 xboxseries
+
+#pragma kernel CSMain
+
+ByteAddressBuffer InputVertexBuffer;
+uint InputVertexStride;
+uint InputVertexCount;
+
+RWByteAddressBuffer OutputVertexBuffer;
+uint OutputVertexBufferOffset;
+
+[numthreads(64, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint vertexIndex = id.x;
+
+    if (vertexIndex >= InputVertexCount)
+        return;
+
+    // Copy the vertex int by int.
+    uint valueCount = InputVertexStride / 4;
+    for (uint i = 0; i < valueCount; i++)
+    {
+        uint vertexDataAddress = vertexIndex * InputVertexStride + i * 4;
+
+        uint value = InputVertexBuffer.Load(vertexDataAddress);
+
+        OutputVertexBuffer.Store(OutputVertexBufferOffset + vertexDataAddress, value);
+    }
+}

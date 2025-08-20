@@ -1,0 +1,41 @@
+
+#pragma kernel main
+
+#pragma only_renderers d3d11 ps5 xboxseries
+
+ByteAddressBuffer InstanceData;
+AppendStructuredBuffer<uint> InstanceIndices;
+
+uint TotalInstanceCount;
+uint InstanceDataByteSize;
+uint ObjectToWorldByteOffset;
+
+float4 CameraPosAndRadius2;
+
+[numthreads(64,1,1)]
+void main (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= TotalInstanceCount)
+        return;
+
+    uint instanceIndex = id.x;
+
+    uint instanceDataAddress = instanceIndex * InstanceDataByteSize;
+
+    uint instanceMatrixAddress = instanceDataAddress + ObjectToWorldByteOffset;
+
+    // Not using the entire matrix here, just the position.
+    float4x4 instanceMatrix;
+    instanceMatrix[0] = asfloat(InstanceData.Load4(instanceMatrixAddress));
+    instanceMatrix[1] = asfloat(InstanceData.Load4(instanceMatrixAddress + 16));
+    instanceMatrix[2] = asfloat(InstanceData.Load4(instanceMatrixAddress + 32));
+    instanceMatrix[3] = asfloat(InstanceData.Load4(instanceMatrixAddress + 48));
+
+    float3 instancePos = instanceMatrix[3].xyz;
+
+    // Check if the instance position is inside the sphere.
+    if (dot(instancePos - CameraPosAndRadius2.xyz, instancePos - CameraPosAndRadius2.xyz) < CameraPosAndRadius2.w)
+    {
+        InstanceIndices.Append(instanceIndex);
+    }
+}
