@@ -36,4 +36,4 @@ The acceleration structure visualization tool in PIX:
 <img src="Images/PIX.png" width="1280">
 
 # Requirements
-Unity 6.3 beta1 +
+Unity 6.3 alpha5 +
